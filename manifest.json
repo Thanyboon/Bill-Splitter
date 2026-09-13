@@ -1,0 +1,21 @@
+{
+  "name": "BillSplit",
+  "short_name": "BillSplit",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eef2f7",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn.phototourl.com/free/2026-09-13-a34e98a2-1f21-4617-bcc0-6d5f2b6e5ef4.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://cdn.phototourl.com/free/2026-09-13-cc221aef-d3ff-407c-9895-f2e389b33deb.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
