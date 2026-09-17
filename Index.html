@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BillSplit">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Sarabun',sans-serif;background:#eef2f7;color:#1e293b;padding-bottom:60px}
+
+/* --- Splash Screen (หน้าเปิดตัวตอนเข้าแอปแบบ FlowBill) --- */
+#splash{position:fixed;inset:0;background:#ffffff;z-index:9999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;transition:opacity 0.4s ease, visibility 0.4s ease}
+#splash.hide{opacity:0;visibility:hidden}
+.splash-logo{width:110px;height:110px;object-fit:contain;margin-bottom:16px;animation:pulse 1.5s infinite ease-in-out}
+.splash-title{font-size:22px;font-weight:700;color:#4f46e5;margin-bottom:6px}
+.splash-sub{font-size:14px;color:#64748b}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+header{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
+  padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding-top:calc(14px + env(safe-area-inset-top));box-shadow:0 4px 16px rgba(79,70,229,.3)}
+header h1{font-size:19px;font-weight:700;flex:1;white-space:nowrap}
+.nav{display:flex;gap:8px;margin-left:auto}
+.nav button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;
+  padding:9px 14px;border-radius:11px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.nav button.on{background:#fff;color:#4f46e5}
+main{width:100%;max-width:480px;margin:0 auto;padding:12px}
+.page{display:none}.page.on{display:block}
+.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 2px 14px rgba(15,23,42,.07);margin-bottom:16px}
+.card h2{font-size:17px;margin-bottom:14px;color:#4f46e5}
+.card.warn{border:1.5px solid #fecaca;background:#fff7f7}
+.card.warn h2{color:#b91c1c}
+label{display:block;font-size:14px;font-weight:600;margin:0 0 6px;color:#475569}
+input,select{width:100%;padding:13px;border:1.5px solid #dbe2ea;border-radius:12px;font-size:16px;
+  font-family:inherit;background:#fff;color:#1e293b}
+input:focus,select:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.13)}
+.row{display:grid;gap:12px;margin-bottom:14px}
+@media(min-width:640px){.row.two{grid-template-columns:1fr 1fr}.row.item{grid-template-columns:2fr 1fr auto;align-items:end}}
+.btn{width:100%;padding:15px;border:none;border-radius:13px;font-size:16px;font-weight:700;
+  font-family:inherit;cursor:pointer;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}
+.btn.g{background:linear-gradient(135deg,#059669,#10b981)}
+.btn.o{background:#fff;color:#4f46e5;border:1.5px solid #c7d2fe}
+.btn.r{background:linear-gradient(135deg,#dc2626,#ef4444)}
+.btn.y{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.btn:active{transform:scale(.98)}
+.btns{display:grid;gap:10px}
+@media(min-width:640px){.btns.c2{grid-template-columns:1fr 1fr}.btns.c3{grid-template-columns:repeat(3,1fr)}}
+.ilist{list-style:none;margin-top:6px}
+.ilist li{display:flex;align-items:center;gap:10px;padding:12px;background:#f8fafc;
+  border:1px solid #e8edf3;border-radius:12px;margin-bottom:8px}
+.ilist .no{font-weight:700;color:#64748b;min-width:24px;font-size:14px}
+.ilist .nm{flex:1;font-weight:600;font-size:15px;word-break:break-word}
+.ilist .am{font-weight:700;color:#4f46e5;white-space:nowrap}
+.mini{padding:8px 11px;border:none;border-radius:9px;font-size:13px;font-weight:600;
+  font-family:inherit;cursor:pointer}
+.mini.e{background:#fef3c7;color:#b45309}
+.mini.d{background:#fee2e2;color:#b91c1c}
+.empty{text-align:center;color:#94a3b8;padding:30px 10px;font-size:15px}
+.note{font-size:13.5px;color:#64748b;line-height:1.65;margin-bottom:12px}
+.stat{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat div{flex:1;min-width:120px;background:#f1f5f9;border-radius:12px;padding:11px 13px}
+.stat .k{font-size:12.5px;color:#64748b;font-weight:600}
+.stat .v{font-size:17px;font-weight:700;color:#4f46e5;margin-top:2px}
+#billsWrap{display:grid;gap:16px;background:#eef2f7;padding:4px}
+@media(min-width:820px){#billsWrap{grid-template-columns:1fr 1fr}}
+.bill{background:#fff;border-radius:18px;padding:22px;border:2px solid #e2e8f0}
+.bill.split{border-color:#10b981}
+.bill .bh{text-align:center;border-bottom:2.5px dashed #cbd5e1;padding-bottom:14px;margin-bottom:14px}
+.bill .tag{display:inline-block;padding:5px 14px;border-radius:999px;font-size:12.5px;font-weight:700;
+  background:#eef2ff;color:#4f46e5;margin-bottom:8px}
+.bill.split .tag{background:#ecfdf5;color:#059669}
+.bill .bt{font-size:19px;font-weight:700}
+.bill .bd{font-size:13.5px;color:#64748b;margin-top:4px}
+.bl{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dotted #e2e8f0;font-size:15px}
+.bl span:last-child{font-weight:600;white-space:nowrap}
+.tot{display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;
+  border-top:2.5px dashed #cbd5e1;font-size:18px;font-weight:700}
+.tot .v{color:#4f46e5}.bill.split .tot .v{color:#059669}
+.per{margin-top:14px;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:13px;padding:15px;text-align:center}
+.per .l{font-size:13.5px;color:#047857;font-weight:600}
+.per .n{font-size:28px;font-weight:700;color:#059669;margin-top:3px}
+.vrow{display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border-radius:14px;
+  margin-bottom:10px;box-shadow:0 2px 10px rgba(15,23,42,.06)}
+.vrow .info{flex:1;min-width:0}
+.vrow .t{font-weight:700;font-size:15.5px;margin-bottom:3px}
+.vrow .s{font-size:13px;color:#64748b}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(80px);
+  background:#1e293b;color:#fff;padding:13px 22px;border-radius:12px;font-size:14.5px;font-weight:600;
+  opacity:0;transition:.3s;z-index:999;max-width:90%;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- หน้าจอ Splash Screen เปิดตัวแอป -->
+<div id="splash">
+  <img src="icon-192.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn.phototourl.com/free/2026-09-13-a34e98a2-1f21-4617-bcc0-6d5f2b6e5ef4.jpg'">
+  <div class="splash-title">💸 บิลหารเงิน</div>
+  <div class="splash-sub">ระบบจัดการบิลอัจฉริยะ</div>
+</div>
+
+<header>
+  <h1>💸 บิลหารเงิน</h1>
+  <div class="nav">
+    <button id="nNew" class="on">＋ เพิ่มบิล</button>
+    <button id="nVault">🗂 คลังบิล</button>
+  </div>
+</header>
+
+<main>
+  <!-- ========== หน้าเพิ่ม/แก้ไขบิล ========== -->
+  <section id="pEditor" class="page on">
+    <div class="card">
+      <h2 id="edTitle">＋ เปิดบิลใหม่</h2>
+      <div class="row two">
+        <div><label>วันที่</label><input type="date" id="fDate"></div>
+        <div><label>ชื่อบิล</label><input type="text" id="fTitle" placeholder="เช่น หมูกระทะวันศุกร์"></div>
+      </div>
+      <label>จำนวนคนที่จะหาร</label>
+      <input type="number" id="fPeople" min="1" step="1" value="2" inputmode="numeric">
+    </div>
+
+    <div class="card">
+      <h2>🧾 รายการค่าใช้จ่าย</h2>
+      <div class="row item">
+        <div><label>รายการของ</label><input type="text" id="fName" placeholder="ชื่อรายการ"></div>
+        <div><label>จำนวนเงิน</label><input type="number" id="fAmt" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></div>
+        <div><button class="btn" id="bAdd" style="min-width:120px">เพิ่มรายการ</button></div>
+      </div>
+      <ul class="ilist" id="itemList"></ul>
+      <div id="itemEmpty" class="empty">ยังไม่มีรายการ — เพิ่มรายการแรกได้เลย</div>
+    </div>
+
+    <button class="btn g" id="bSave">💾 บันทึกบิล</button>
+  </section>
+
+  <!-- ========== หน้าผลลัพธ์ ========== -->
+  <section id="pResult" class="page">
+    <div id="billsWrap">
+      <div class="bill" id="billPlain"></div>
+      <div class="bill split" id="billSplit"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>📥 ดาวน์โหลดเป็นรูปภาพ</h2>
+      <div class="btns c3">
+        <button class="btn o" onclick="shot('billPlain','ยังไม่หาร')">🖼 รูปเดี่ยว · ยังไม่หาร</button>
+        <button class="btn o" onclick="shot('billSplit','หารแล้ว')">🖼 รูปเดี่ยว · หารแล้ว</button>
+        <button class="btn" onclick="shot('billsWrap','บิลคู่')">🖼🖼 รูปคู่ (2 บิล)</button>
+      </div>
+      <h2 style="margin-top:18px">📄 ดาวน์โหลดเป็นไฟล์</h2>
+      <div class="btns c2">
+        <button class="btn o" onclick="saveFile('txt')">📄 ไฟล์ข้อความ (.txt)</button>
+        <button class="btn o" onclick="saveFile('json')">🗄 ไฟล์ข้อมูล (.json)</button>
+      </div>
+    </div>
+
+    <div class="btns c2">
+      <button class="btn" id="bEditThis">✏️ แก้ไขบิลนี้</button>
+      <button class="btn g" id="bNewFromResult">＋ เปิดบิลใหม่</button>
+    </div>
+  </section>
+
+  <!-- ========== หน้าคลังบิล ========== -->
+  <section id="pVault" class="page">
+    <div class="card">
+      <h2>🗂 คลังบิล — ประวัติที่บันทึกไว้</h2>
+      <div id="vaultList"></div>
+    </div>
+
+    <!-- ===== สำรอง / กู้คืน ===== -->
+    <div class="card">
+      <h2>🔐 สำรอง / กู้คืนข้อมูลทั้งหมด</h2>
+      <div class="stat">
+        <div><div class="k">บิลทั้งหมด</div><div class="v" id="stCount">0 บิล</div></div>
+        <div><div class="k">ยอดรวมสะสม</div><div class="v" id="stSum">฿0.00</div></div>
+        <div><div class="k">สำรองล่าสุด</div><div class="v" id="stBackup" style="font-size:14.5px">ยังไม่เคย</div></div>
+      </div>
+      <p class="note">
+        📦 <b>สำรองข้อมูล</b> — บันทึกบิลทุกใบเป็นไฟล์ <code>.json</code> ไฟล์เดียว เก็บไว้ในเครื่อง/ไดรฟ์<br>
+        ♻️ <b>กู้คืนข้อมูล</b> — เลือกไฟล์สำรองที่เคยบันทึกไว้ เพื่อนำบิลกลับมา (ใช้ย้ายข้ามเครื่องได้)
+      </p>
+      <div class="btns c2">
+        <button class="btn g" id="bBackup">📦 สำรองข้อมูล (ดาวน์โหลด)</button>
+        <button class="btn y" id="bRestore">♻️ กู้คืนจากไฟล์สำรอง</button>
+      </div>
+      <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+    </div>
+
+    <div class="card warn">
+      <h2>⚠️ เขตอันตราย</h2>
+      <p class="note">ลบบิลทั้งหมดออกจากเครื่องนี้อย่างถาวร — กู้กลับได้ก็ต่อเมื่อมีไฟล์สำรองเท่านั้น</p>
+      <button class="btn r" id="bWipe">🗑 ลบข้อมูลทั้งหมด</button>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- โหลด Firebase SDK แบบ Modular ผ่าน CDN และเชื่อมต่อฐานข้อมูล -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAD7sIBtN-eiN7UQw7OJttZ1Ckzv7MNY7g",
+    authDomain: "mybillapp-c5d32.firebaseapp.com",
+    databaseURL: "https://mybillapp-c5d32-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "mybillapp-c5d32",
+    storageBucket: "mybillapp-c5d32.firebasestorage.app",
+    messagingSenderId: "1070633330703",
+    appId: "1:1070633330703:web:1fa84c2cbead2665155b7a",
+    measurementId: "G-P8F903513F"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // ปิดหน้าจอ Splash Screen สมูทๆ หลังจากโหลดเสร็จ
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const splash = document.getElementById('splash');
+      if(splash) {
+        splash.classList.add('hide');
+        setTimeout(() => splash.remove(), 400);
+      }
+    }, 600);
+  });
+
+  const KEY='billsplit_v1', BKEY='billsplit_lastbackup';
+  let bills=JSON.parse(localStorage.getItem(KEY)||'[]');
+  let cur=null, editIdx=-1;
+  const $=id=>document.getElementById(id);
+  const money=n=>Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const save=()=>localStorage.setItem(KEY,JSON.stringify(bills));
+  function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('on'),2600)}
+  function go(p){['pEditor','pResult','pVault'].forEach(x=>$(x).classList.remove('on'));$(p).classList.add('on');
+    $('nNew').classList.toggle('on',p==='pEditor');$('nVault').classList.toggle('on',p==='pVault');window.scrollTo(0,0)}
+  const thDate=d=>{const x=new Date(d+'T00:00:00');return isNaN(x)?d:x.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})};
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const dl=(blob,name)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+    document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)};
+
+  /* ---------- ตัวแก้ไขบิล ---------- */
+  function newBill(){
+    cur={id:uid(),date:new Date().toISOString().slice(0,10),title:'',people:2,items:[],ts:Date.now()};
+    editIdx=-1;$('bAdd').textContent='เพิ่มรายการ';fillEditor();go('pEditor');
+  }
+  function fillEditor(){
+    $('edTitle').textContent = bills.some(b=>b.id===cur.id) ? '✏️ แก้ไขบิล' : '＋ เปิดบิลใหม่';
+    $('fDate').value=cur.date;$('fTitle').value=cur.title;$('fPeople').value=cur.people;renderItems();
+  }
+  function renderItems(){
+    const ul=$('itemList');ul.innerHTML='';$('itemEmpty').style.display=cur.items.length?'none':'block';
+    cur.items.forEach((it,i)=>{
+      const li=document.createElement('li');
+      li.innerHTML=`<div class="no">${i+1}.</div><div class="nm">${esc(it.name)}</div><div class="am">฿${money(it.amount)}</div>
+        <button class="mini e">แก้ไข</button><button class="mini d">ลบ</button>`;
+      li.querySelector('.e').onclick=()=>{editIdx=i;$('fName').value=it.name;$('fAmt').value=it.amount;
+        $('bAdd').textContent='อัปเดต';$('fName').focus();window.scrollTo({top:$('fName').offsetTop-90,behavior:'smooth'})};
+      li.querySelector('.d').onclick=()=>{if(confirm(`ลบ "${it.name}" ?`)){cur.items.splice(i,1);editIdx=-1;
+        $('bAdd').textContent='เพิ่มรายการ';$('fName').value='';$('fAmt').value='';renderItems()}};
+      ul.appendChild(li);
+    });
+  }
+  $('bAdd').onclick=()=>{
+    const n=$('fName').value.trim(), a=parseFloat($('fAmt').value);
+    if(!n) return toast('⚠️ กรอกชื่อรายการก่อน');
+    if(isNaN(a)||a<0) return toast('⚠️ กรอกจำนวนเงินให้ถูกต้อง');
+    if(editIdx>-1){cur.items[editIdx]={name:n,amount:a};editIdx=-1;$('bAdd').textContent='เพิ่มรายการ';toast('✅ แก้ไขรายการแล้ว')}
+    else{cur.items.push({name:n,amount:a});toast('✅ เพิ่มรายการแล้ว')}
+    $('fName').value='';$('fAmt').value='';$('fName').focus();renderItems();
+  };
+  $('fAmt').addEventListener('keydown',e=>{if(e.key==='Enter')$('bAdd').click()});
+
+  $('bSave').onclick=()=>{
+    cur.date=$('fDate').value||new Date().toISOString().slice(0,10);
+    cur.title=$('fTitle').value.trim()||'บิลค่าใช้จ่าย';
+    cur.people=Math.max(1,parseInt($('fPeople').value)||1);
+    if(!cur.items.length) return toast('⚠️ ยังไม่มีรายการในบิล');
+    cur.ts=Date.now();
+    const i=bills.findIndex(b=>b.id===cur.id);
+    if(i>-1) bills[i]=JSON.parse(JSON.stringify(cur)); else bills.unshift(JSON.parse(JSON.stringify(cur)));
+    save();toast('💾 บันทึกบิลเรียบร้อย');showResult(cur);
+  };
+
+  /* ---------- ผลลัพธ์ 2 บิล ---------- */
+  function showResult(b){
+    cur=JSON.parse(JSON.stringify(b));
+    const tot=b.items.reduce((s,i)=>s+i.amount,0), p=b.people||1;
+    const head=(tag,t,d,extra)=>`<div class="bh"><div class="tag">${tag}</div>
+      <div class="bt">${esc(t)}</div><div class="bd">📅 ${thDate(d)}${extra}</div></div>`;
+    $('billPlain').innerHTML = head('ยังไม่หาร',b.title,b.date,'')
+      + b.items.map((i, idx)=>`<div class="bl"><span>${idx+1}. ${esc(i.name)}</span><span>฿${money(i.amount)}</span></div>`).join('')
+      + `<div class="tot"><span>รวมทั้งหมด</span><span class="v">฿${money(tot)}</span></div>`;
+    $('billSplit').innerHTML = head('หารแล้ว ÷ '+p+' คน',b.title,b.date,` · 👥 ${p} คน`)
+      + b.items.map((i, idx)=>`<div class="bl"><span>${idx+1}. ${esc(i.name)}</span><span>฿${money(i.amount/p)}</span></div>`).join('')
+      + `<div class="tot"><span>รวม ÷ ${p}</span><span class="v">฿${money(tot/p)}</span></div>`
+      + `<div class="per"><div class="l">คนละ</div><div class="n">฿${money(tot/p)}</div>
+         <div class="l" style="margin-top:4px">(ยอดเต็ม ฿${money(tot)})</div></div>`;
+    go('pResult');
+  }
+  $('bEditThis').onclick=()=>{editIdx=-1;$('bAdd').textContent='เพิ่มรายการ';fillEditor();go('pEditor')};
+  $('bNewFromResult').onclick=newBill;
+
+  /* ---------- ดาวน์โหลดรูป / ไฟล์บิลเดี่ยว ---------- */
+  window.shot = function(id,label){
+    toast('⏳ กำลังสร้างรูป...');
+    html2canvas($(id),{scale:2,backgroundColor:'#eef2f7',useCORS:true}).then(c=>{
+      c.toBlob(b=>{dl(b,`บิล_${cur.title}_${cur.date}_${label}.png`);toast('✅ ดาวน์โหลดรูปแล้ว')});
+    }).catch(()=>toast('❌ สร้างรูปไม่สำเร็จ'));
+  }
+  window.saveFile = function(type){
+    const b=cur,tot=b.items.reduce((s,i)=>s+i.amount,0),p=b.people;
+    let data,mime,ext;
+    if(type==='json'){data=JSON.stringify(b,null,2);mime='application/json';ext='json'}
+    else{
+      data=`${b.title}\nวันที่: ${thDate(b.date)}\nจำนวนคนหาร: ${p} คน\n`+'='.repeat(34)+
+      `\n[ บิลยังไม่หาร ]\n`+b.items.map((i,idx)=>`- ${idx+1}. ${i.name} : ${money(i.amount)} บาท`).join('\n')+
+      `\nรวมทั้งหมด: ${money(tot)} บาท\n`+'='.repeat(34)+
+      `\n[ บิลหารแล้ว ÷ ${p} ]\n`+b.items.map((i,idx)=>`- ${idx+1}. ${i.name} : ${money(i.amount/p)} บาท`).join('\n')+
+      `\nคนละ: ${money(tot/p)} บาท\n`;
+      mime='text/plain;charset=utf-8';ext='txt';
+    }
+    dl(new Blob([data],{type:mime}),`บิล_${b.title}_${b.date}.${ext}`);toast('✅ ดาวน์โหลดไฟล์แล้ว');
+  }
+
+  /* ================= สำรอง / กู้คืน ================= */
+  $('bBackup').onclick=()=>{
+    if(!bills.length) return toast('⚠️ ยังไม่มีบิลให้สำรอง');
+    const pack={app:'bill-splitter',version:1,exportedAt:new Date().toISOString(),count:bills.length,bills};
+    const d=new Date(),pad=n=>String(n).padStart(2,'0');
+    dl(new Blob([JSON.stringify(pack,null,2)],{type:'application/json'}),
+       `สำรองบิล_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.json`);
+    localStorage.setItem(BKEY,d.toISOString());
+    renderVault();toast(`📦 สำรอง ${bills.length} บิลเรียบร้อย`);
+  };
+
+  $('bRestore').onclick=()=>$('fileInput').click();$('fileInput').onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const raw=JSON.parse(ev.target.result);
+        let incoming = Array.isArray(raw) ? raw : (Array.isArray(raw.bills) ? raw.bills : (raw.items ? [raw] : null));
+        if(!incoming || !incoming.length) throw 0;
+        incoming = incoming.filter(b=>b && Array.isArray(b.items)).map(b=>({
+          id: b.id || uid(),
+          date: b.date || new Date().toISOString().slice(0,10),
+          title: b.title || 'บิลค่าใช้จ่าย',
+          people: Math.max(1, parseInt(b.people)||1),
+          items: b.items.map(i=>({name:String(i.name||'รายการ'), amount:Number(i.amount)||0})),
+          ts: b.ts || Date.now()
+        }));
+        if(!incoming.length) throw 0;
+
+        const mode = bills.length
+          ? (confirm(`พบ ${incoming.length} บิลในไฟล์สำรอง\n\n• กด "ตกลง" = รวมกับบิลเดิม (${bills.length} บิล)\n• กด "ยกเลิก" = แทนที่ของเดิมทั้งหมด`) ? 'merge':'replace')
+          : 'replace';
+
+        if(mode==='replace'){
+          if(bills.length && !confirm(`⚠️ ยืนยันลบบิลเดิม ${bills.length} บิล แล้วแทนที่ด้วยไฟล์สำรอง?`)){e.target.value='';return}
+          bills = incoming;
+        }else{
+          let add=0,upd=0;
+          incoming.forEach(b=>{
+            const i=bills.findIndex(x=>x.id===b.id);
+            if(i>-1){ if((b.ts||0) >= (bills[i].ts||0)){bills[i]=b;upd++} } else {bills.push(b);add++}
+          });
+          toast(`♻️ กู้คืนแล้ว — เพิ่ม ${add} · อัปเดต ${upd}`);
+        }
+        bills.sort((a,b)=>b.ts-a.ts);save();renderVault();
+        if(mode==='replace') toast(`♻️ กู้คืน ${bills.length} บิลเรียบร้อย`);
+      }catch(err){ toast('❌ ไฟล์ไม่ถูกต้อง — ใช้ได้เฉพาะไฟล์สำรอง .json') }
+      e.target.value='';
+    };
+    r.readAsText(f);
+  };
+
+  $('bWipe').onclick=()=>{
+    if(!bills.length) return toast('ไม่มีข้อมูลให้ลบ');
+    if(!confirm(`⚠️ ลบบิลทั้งหมด ${bills.length} บิล อย่างถาวร?`)) return;
+    if(!confirm('ยืนยันอีกครั้ง — ข้อมูลจะหายถาวร กู้ได้เฉพาะจากไฟล์สำรอง')) return;
+    bills=[];save();renderVault();toast('🗑 ลบข้อมูลทั้งหมดแล้ว');
+  };
+
+  /* ---------- คลังบิล ---------- */
+  function renderVault(){
+    const w=$('vaultList');
+    const sum=bills.reduce((s,b)=>s+b.items.reduce((x,i)=>x+i.amount,0),0);
+    $('stCount').textContent=bills.length+' บิล';
+    $('stSum').textContent='฿'+money(sum);
+    const lb=localStorage.getItem(BKEY);
+    $('stBackup').textContent = lb ? new Date(lb).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'ยังไม่เคย';
+    if(!bills.length){w.innerHTML='<div class="empty">ยังไม่มีบิลที่บันทึกไว้</div>';return}
+    w.innerHTML='';
+    bills.slice().sort((a,b)=>b.ts-a.ts).forEach(b=>{
+      const tot=b.items.reduce((s,i)=>s+i.amount,0);
+      const d=document.createElement('div');d.className='vrow';
+      d.innerHTML=`<div class="info"><div class="t">${esc(b.title)}</div>
+        <div class="s">${thDate(b.date)} · ${b.items.length} รายการ · ฿${money(tot)} · ${b.people} คน (คนละ ฿${money(tot/b.people)})</div></div>
+        <button class="mini e">เปิด/แก้ไข</button><button class="mini d">ลบ</button>`;
+      d.querySelector('.e').onclick=()=>showResult(b);
+      d.querySelector('.d').onclick=()=>{if(confirm(`ลบบิล "${b.title}" ?`)){bills=bills.filter(x=>x.id!==b.id);save();renderVault();toast('🗑 ลบบิลแล้ว')}};
+      w.appendChild(d);
+    });
+  }
+  $('nNew').onclick=newBill;
+  $('nVault').onclick=()=>{renderVault();go('pVault')};
+  newBill();
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('Service Worker Registered'));
+  }
+</script>
+</body>
+</html>
