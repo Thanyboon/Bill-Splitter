@@ -3,22 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- ลิงก์ไปยังไฟล์ manifest (ทำให้ Android และเบราว์เซอร์ทั่วไปมองเป็น PWA) -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4f46e5">
 
-  <!-- ตั้งค่าสำหรับ iOS (iPhone/iPad) ให้เปิดแบบเต็มจอไร้แถบ URL -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="BillSplit">
   <link rel="apple-touch-icon" href="icon-192.png">
 
-  <!-- Google Fonts & Libraries -->
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Sarabun',sans-serif;background:#eef2f7;color:#1e293b;padding-bottom:60px}
+
+/* --- Splash Screen (หน้าเปิดตัวตอนเข้าแอปแบบ FlowBill) --- */
+#splash{position:fixed;inset:0;background:#ffffff;z-index:9999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;transition:opacity 0.4s ease, visibility 0.4s ease}
+#splash.hide{opacity:0;visibility:hidden}
+.splash-logo{width:110px;height:110px;object-fit:contain;margin-bottom:16px;animation:pulse 1.5s infinite ease-in-out}
+.splash-title{font-size:22px;font-weight:700;color:#4f46e5;margin-bottom:6px}
+.splash-sub{font-size:14px;color:#64748b}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
 header{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
   padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   padding-top:calc(14px + env(safe-area-inset-top));box-shadow:0 4px 16px rgba(79,70,229,.3)}
@@ -51,6 +58,7 @@ input:focus,select:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px 
 .ilist{list-style:none;margin-top:6px}
 .ilist li{display:flex;align-items:center;gap:10px;padding:12px;background:#f8fafc;
   border:1px solid #e8edf3;border-radius:12px;margin-bottom:8px}
+.ilist .no{font-weight:700;color:#64748b;min-width:24px;font-size:14px}
 .ilist .nm{flex:1;font-weight:600;font-size:15px;word-break:break-word}
 .ilist .am{font-weight:700;color:#4f46e5;white-space:nowrap}
 .mini{padding:8px 11px;border:none;border-radius:9px;font-size:13px;font-weight:600;
@@ -93,6 +101,13 @@ input:focus,select:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px 
 </style>
 </head>
 <body>
+
+<!-- หน้าจอ Splash Screen เปิดตัวแอป -->
+<div id="splash">
+  <img src="icon-192.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn.phototourl.com/free/2026-09-13-a34e98a2-1f21-4617-bcc0-6d5f2b6e5ef4.jpg'">
+  <div class="splash-title">💸 บิลหารเงิน</div>
+  <div class="splash-sub">ระบบจัดการบิลอัจฉริยะ</div>
+</div>
 
 <header>
   <h1>💸 บิลหารเงิน</h1>
@@ -193,6 +208,17 @@ input:focus,select:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px 
 <div class="toast" id="toast"></div>
 
 <script>
+// ปิดหน้าจอ Splash Screen สมูทๆ หลังจากโหลดเสร็จ
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    if(splash) {
+      splash.classList.add('hide');
+      setTimeout(() => splash.remove(), 400);
+    }
+  }, 600);
+});
+
 const KEY='billsplit_v1', BKEY='billsplit_lastbackup';
 let bills=JSON.parse(localStorage.getItem(KEY)||'[]');
 let cur=null, editIdx=-1;
@@ -222,7 +248,8 @@ function renderItems(){
   $('itemEmpty').style.display=cur.items.length?'none':'block';
   cur.items.forEach((it,i)=>{
     const li=document.createElement('li');
-    li.innerHTML=`<div class="nm">${esc(it.name)}</div><div class="am">฿${money(it.amount)}</div>
+    // เพิ่มการรันเลขลำดับที่รายการ (1., 2., 3. ...)
+    li.innerHTML=`<div class="no">${i+1}.</div><div class="nm">${esc(it.name)}</div><div class="am">฿${money(it.amount)}</div>
       <button class="mini e">แก้ไข</button><button class="mini d">ลบ</button>`;
     li.querySelector('.e').onclick=()=>{editIdx=i;$('fName').value=it.name;$('fAmt').value=it.amount;
       $('bAdd').textContent='อัปเดต';$('fName').focus();window.scrollTo({top:$('fName').offsetTop-90,behavior:'smooth'})};
@@ -259,10 +286,10 @@ function showResult(b){
   const head=(tag,t,d,extra)=>`<div class="bh"><div class="tag">${tag}</div>
     <div class="bt">${esc(t)}</div><div class="bd">📅 ${thDate(d)}${extra}</div></div>`;
   $('billPlain').innerHTML = head('ยังไม่หาร',b.title,b.date,'')
-    + b.items.map(i=>`<div class="bl"><span>${esc(i.name)}</span><span>฿${money(i.amount)}</span></div>`).join('')
+    + b.items.map((i, idx)=>`<div class="bl"><span>${idx+1}. ${esc(i.name)}</span><span>฿${money(i.amount)}</span></div>`).join('')
     + `<div class="tot"><span>รวมทั้งหมด</span><span class="v">฿${money(tot)}</span></div>`;
   $('billSplit').innerHTML = head('หารแล้ว ÷ '+p+' คน',b.title,b.date,` · 👥 ${p} คน`)
-    + b.items.map(i=>`<div class="bl"><span>${esc(i.name)}</span><span>฿${money(i.amount/p)}</span></div>`).join('')
+    + b.items.map((i, idx)=>`<div class="bl"><span>${idx+1}. ${esc(i.name)}</span><span>฿${money(i.amount/p)}</span></div>`).join('')
     + `<div class="tot"><span>รวม ÷ ${p}</span><span class="v">฿${money(tot/p)}</span></div>`
     + `<div class="per"><div class="l">คนละ</div><div class="n">฿${money(tot/p)}</div>
        <div class="l" style="margin-top:4px">(ยอดเต็ม ฿${money(tot)})</div></div>`;
@@ -284,9 +311,9 @@ function saveFile(type){
   if(type==='json'){data=JSON.stringify(b,null,2);mime='application/json';ext='json'}
   else{
     data=`${b.title}\nวันที่: ${thDate(b.date)}\nจำนวนคนหาร: ${p} คน\n`+'='.repeat(34)+
-    `\n[ บิลยังไม่หาร ]\n`+b.items.map(i=>`- ${i.name} : ${money(i.amount)} บาท`).join('\n')+
+    `\n[ บิลยังไม่หาร ]\n`+b.items.map((i,idx)=>`- ${idx+1}. ${i.name} : ${money(i.amount)} บาท`).join('\n')+
     `\nรวมทั้งหมด: ${money(tot)} บาท\n`+'='.repeat(34)+
-    `\n[ บิลหารแล้ว ÷ ${p} ]\n`+b.items.map(i=>`- ${i.name} : ${money(i.amount/p)} บาท`).join('\n')+
+    `\n[ บิลหารแล้ว ÷ ${p} ]\n`+b.items.map((i,idx)=>`- ${idx+1}. ${i.name} : ${money(i.amount/p)} บาท`).join('\n')+
     `\nคนละ: ${money(tot/p)} บาท\n`;
     mime='text/plain;charset=utf-8';ext='txt';
   }
